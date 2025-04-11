@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -99,6 +100,19 @@ const CreateEvent = () => {
         ? formData.visibility 
         : 'public';
       
+      // Get the user's profile to access their name
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('id', user.id)
+        .single();
+      
+      if (profileError) {
+        console.warn('Could not fetch user profile:', profileError);
+      }
+      
+      const hostName = profileData?.name || user.email || user.phone || 'Anonymous Host';
+      
       const eventData = {
         title: formData.title,
         description: formData.description,
@@ -107,7 +121,7 @@ const CreateEvent = () => {
         capacity: formData.capacity,
         visibility: visibility,
         host_id: user.id,
-        host_name: user.name || 'Anonymous Host',
+        host_name: hostName,
         attendees: [],
         waitlist: [],
         is_paid: formData.isPaid,
