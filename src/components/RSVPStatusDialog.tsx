@@ -46,6 +46,7 @@ const RSVPStatusDialog: React.FC<RSVPStatusDialogProps> = ({
     }
     
     setIsSubmitting(true);
+    console.log("Submitting RSVP with status:", status);
     
     try {
       const result = await onSubmit(status);

@@ -97,10 +97,11 @@ export const useEvent = (id: string | undefined) => {
     // Add the attendee to the appropriate status group
     statusGroups[status] = [...statusGroups[status], attendee];
     
-    // Update the database with structured data
-    // We need to convert our strongly typed object to a format that matches the Json type in Supabase
+    console.log("Updating RSVP status for:", attendeeId, "Status:", status);
+    console.log("Updated status groups:", statusGroups);
+    
     try {
-      // Convert the statusGroups object to a plain object that Supabase can handle
+      // Convert the statusGroups object to a format that Supabase can handle
       const supabaseFormat = {
         going: statusGroups.going.map(a => ({
           id: a.id,
@@ -125,6 +126,8 @@ export const useEvent = (id: string | undefined) => {
         }))
       };
 
+      console.log("Sending to Supabase:", supabaseFormat);
+      
       const { error } = await supabase
         .from('events')
         .update({

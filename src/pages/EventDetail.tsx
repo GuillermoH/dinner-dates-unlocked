@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -88,8 +89,10 @@ const EventDetail = () => {
   const formattedDate = format(eventDate, "EEEE, MMMM d, yyyy");
   const formattedTime = format(eventDate, "h:mm a");
   
-  const attendeeCount = (event.attendees_by_status?.going.length || 0) + 
-                        (event.attendees_by_status?.maybe.length || 0);
+  // Calculate attendee count from attendees_by_status
+  const attendeeCount = 
+    (event.attendees_by_status?.going.length || 0) + 
+    (event.attendees_by_status?.maybe.length || 0);
   const availableSpots = Math.max(0, event.capacity - attendeeCount);
   const isFull = availableSpots === 0;
   
@@ -99,10 +102,15 @@ const EventDetail = () => {
       return { success: false };
     }
     
+    console.log("Attempting RSVP with status:", status);
+    
     const result = await updateRSVPStatus(user.id, user.email || '', user.user_metadata?.name || 'Anonymous', status);
     
     if (result.success) {
       setUserRsvpStatus(status);
+      toast.success(`RSVP successfully updated to ${status}!`);
+    } else {
+      toast.error("Failed to update RSVP. Please try again.");
     }
     
     return result;
