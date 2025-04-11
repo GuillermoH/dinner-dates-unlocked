@@ -7,9 +7,25 @@ import { Loader2, Calendar, PlusCircle, ArrowLeft, Users } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Community, SGDEvent } from '@/types';
+import { Community, SGDEvent, Attendee } from '@/types';
 import EventList from '@/components/EventList';
 import { toast } from 'sonner';
+import { Json } from '@/integrations/supabase/types';
+
+// Type guard to check if a value is an Attendee
+const isAttendee = (value: any): value is Attendee => {
+  return typeof value === 'object' && value !== null && 
+    'id' in value && 
+    'name' in value && 
+    'email' in value;
+};
+
+// Convert Json array to Attendee array with type safety
+const jsonToAttendees = (json: Json | null): Attendee[] => {
+  if (!json || !Array.isArray(json)) return [];
+  
+  return json.filter(isAttendee);
+};
 
 const CommunityDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -39,7 +55,7 @@ const CommunityDetail = () => {
 
   // Fetch community events
   const { 
-    data: events, 
+    data: eventsData, 
     isLoading: isLoadingEvents,
     error: eventsError 
   } = useQuery({
@@ -52,10 +68,17 @@ const CommunityDetail = () => {
         .order('date_time', { ascending: true });
       
       if (error) throw error;
-      return data as SGDEvent[];
+      return data;
     },
     enabled: !!id,
   });
+
+  // Transform database events to SGDEvent type
+  const events: SGDEvent[] | undefined = eventsData?.map(event => ({
+    ...event,
+    attendees: jsonToAttendees(event.attendees),
+    waitlist: jsonToAttendees(event.waitlist)
+  }));
 
   // Join community mutation
   const joinCommunityMutation = useMutation({

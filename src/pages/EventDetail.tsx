@@ -41,7 +41,7 @@ const EventDetail = () => {
     );
   }
   
-  const eventDate = new Date(event.dateTime);
+  const eventDate = new Date(event.date_time);
   const formattedDate = format(eventDate, "EEEE, MMMM d, yyyy");
   const formattedTime = format(eventDate, "h:mm a");
   
@@ -124,7 +124,7 @@ const EventDetail = () => {
             
             <div className="mt-6">
               <h2 className="text-xl font-semibold mb-2">Hosted by</h2>
-              <p>{event.hostName}</p>
+              <p>{event.host_name}</p>
             </div>
           </div>
         </div>
@@ -133,7 +133,7 @@ const EventDetail = () => {
           <div className="sticky top-24 bg-white rounded-lg border p-6 shadow-sm">
             <div className="mb-4">
               <h3 className="text-lg font-semibold mb-1">
-                {event.isPaid ? `$${event.price}` : 'Free Event'}
+                {event.is_paid ? `$${event.price}` : 'Free Event'}
               </h3>
               <p className="text-sm text-muted-foreground">
                 {isFull ? 'This event is full' : `${availableSpots} spots remaining`}
@@ -178,7 +178,7 @@ const EventDetail = () => {
                         required
                       />
                     </div>
-                    {event.isPaid && (
+                    {event.is_paid && (
                       <div className="text-sm text-muted-foreground">
                         <p>This is a paid event. After RSVP, you'll receive payment instructions.</p>
                       </div>

@@ -14,7 +14,7 @@ interface EventCardProps {
 }
 
 const EventCard: React.FC<EventCardProps> = ({ event, className }) => {
-  const eventDate = new Date(event.dateTime);
+  const eventDate = new Date(event.date_time);
   const formattedDate = format(eventDate, "MMM d, yyyy");
   const formattedTime = format(eventDate, "h:mm a");
   
@@ -73,7 +73,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, className }) => {
           
           <div className="flex justify-between items-center mt-auto">
             <div className="text-sm">
-              {event.isPaid ? (
+              {event.is_paid ? (
                 <span className="font-medium">${event.price}</span>
               ) : (
                 <span className="text-success font-medium">Free</span>
