@@ -1,7 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Community, SGDEvent } from '@/types';
+import { Community, SGDEvent, Attendee, RSVPStatus } from '@/types';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { jsonToAttendees, isValidVisibility } from '@/utils/typeGuards';
@@ -55,6 +55,12 @@ export const useCommunity = (id: string | undefined) => {
     ...event,
     attendees: jsonToAttendees(event.attendees),
     waitlist: jsonToAttendees(event.waitlist),
+    // Parse attendees_by_status if available
+    attendees_by_status: event.attendees_by_status ? {
+      going: jsonToAttendees(Array.isArray((event.attendees_by_status as any)?.going) ? (event.attendees_by_status as any).going : []),
+      maybe: jsonToAttendees(Array.isArray((event.attendees_by_status as any)?.maybe) ? (event.attendees_by_status as any).maybe : []),
+      not_going: jsonToAttendees(Array.isArray((event.attendees_by_status as any)?.not_going) ? (event.attendees_by_status as any).not_going : [])
+    } : undefined,
     // Ensure visibility is a valid EventVisibility type
     visibility: isValidVisibility(event.visibility) ? event.visibility : 'public'
   }));

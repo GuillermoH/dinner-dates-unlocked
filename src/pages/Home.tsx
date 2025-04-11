@@ -33,6 +33,12 @@ const Home = () => {
           ...event,
           attendees: jsonToAttendees(event.attendees),
           waitlist: jsonToAttendees(event.waitlist),
+          // Parse attendees_by_status if available
+          attendees_by_status: event.attendees_by_status ? {
+            going: jsonToAttendees(Array.isArray((event.attendees_by_status as any)?.going) ? (event.attendees_by_status as any).going : []),
+            maybe: jsonToAttendees(Array.isArray((event.attendees_by_status as any)?.maybe) ? (event.attendees_by_status as any).maybe : []),
+            not_going: jsonToAttendees(Array.isArray((event.attendees_by_status as any)?.not_going) ? (event.attendees_by_status as any).not_going : [])
+          } : undefined,
           // Ensure visibility is a valid EventVisibility type
           visibility: isValidVisibility(event.visibility) ? event.visibility : 'public'
         }));

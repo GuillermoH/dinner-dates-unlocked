@@ -18,6 +18,14 @@ export const mockEvents: SGDEvent[] = [
       { id: "u2", name: "Taylor Johnson", email: "taylor@university.edu" },
     ],
     waitlist: [],
+    attendees_by_status: {
+      going: [
+        { id: "u1", name: "Jordan Smith", email: "jordan@university.edu" },
+        { id: "u2", name: "Taylor Johnson", email: "taylor@university.edu" },
+      ],
+      maybe: [],
+      not_going: []
+    },
     is_paid: false,
   },
   {
@@ -38,6 +46,15 @@ export const mockEvents: SGDEvent[] = [
     waitlist: [
       { id: "u6", name: "Riley Brown", email: "riley@university.edu" },
     ],
+    attendees_by_status: {
+      going: [
+        { id: "u3", name: "Casey Lee", email: "casey@university.edu" },
+        { id: "u4", name: "Morgan Chen", email: "morgan@university.edu" },
+        { id: "u5", name: "Jamie Kim", email: "jamie@university.edu" },
+      ],
+      maybe: [],
+      not_going: []
+    },
     is_paid: true,
     price: 15,
     community_id: "business-school",
@@ -60,6 +77,16 @@ export const mockEvents: SGDEvent[] = [
       { id: "u10", name: "Avery Nguyen", email: "avery@university.edu" },
     ],
     waitlist: [],
+    attendees_by_status: {
+      going: [
+        { id: "u7", name: "Quinn Zhang", email: "quinn@university.edu" },
+        { id: "u8", name: "Robin Gupta", email: "robin@university.edu" },
+        { id: "u9", name: "Cameron Silva", email: "cameron@university.edu" },
+        { id: "u10", name: "Avery Nguyen", email: "avery@university.edu" },
+      ],
+      maybe: [],
+      not_going: []
+    },
     is_paid: false,
     image: "https://images.unsplash.com/photo-1547573854-74d2a71d0826?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
   },
@@ -78,6 +105,14 @@ export const mockEvents: SGDEvent[] = [
       { id: "u12", name: "Dakota Wilson", email: "dakota@university.edu" },
     ],
     waitlist: [],
+    attendees_by_status: {
+      going: [
+        { id: "u11", name: "River Patel", email: "river@university.edu" },
+        { id: "u12", name: "Dakota Wilson", email: "dakota@university.edu" },
+      ],
+      maybe: [],
+      not_going: []
+    },
     is_paid: true,
     price: 10,
     community_id: "cs-department",
@@ -97,6 +132,14 @@ export const mockEvents: SGDEvent[] = [
       { id: "u14", name: "Alex Martinez", email: "alex.m@university.edu" },
     ],
     waitlist: [],
+    attendees_by_status: {
+      going: [
+        { id: "u13", name: "Jordan Harper", email: "jordan.h@university.edu" },
+        { id: "u14", name: "Alex Martinez", email: "alex.m@university.edu" },
+      ],
+      maybe: [],
+      not_going: []
+    },
     is_paid: false,
     image: "https://images.unsplash.com/photo-1528605248644-14dd04022da1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80",
   }

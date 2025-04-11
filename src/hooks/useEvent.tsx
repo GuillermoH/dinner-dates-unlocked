@@ -1,8 +1,9 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { SGDEvent, Attendee } from '@/types';
+import { SGDEvent, Attendee, RSVPStatus } from '@/types';
 import { jsonToAttendees, isValidVisibility } from '@/utils/typeGuards';
+import { Json } from '@/integrations/supabase/types';
 
 export const useEvent = (id: string | undefined) => {
   const { 
@@ -30,14 +31,10 @@ export const useEvent = (id: string | undefined) => {
         waitlist: jsonToAttendees(data.waitlist),
         // Parse attendees_by_status if available
         attendees_by_status: data.attendees_by_status ? {
-          going: jsonToAttendees(data.attendees_by_status.going || []),
-          maybe: jsonToAttendees(data.attendees_by_status.maybe || []),
-          not_going: jsonToAttendees(data.attendees_by_status.not_going || [])
-        } : {
-          going: [],
-          maybe: [],
-          not_going: []
-        },
+          going: jsonToAttendees(Array.isArray((data.attendees_by_status as any)?.going) ? (data.attendees_by_status as any).going : []),
+          maybe: jsonToAttendees(Array.isArray((data.attendees_by_status as any)?.maybe) ? (data.attendees_by_status as any).maybe : []),
+          not_going: jsonToAttendees(Array.isArray((data.attendees_by_status as any)?.not_going) ? (data.attendees_by_status as any).not_going : [])
+        } : undefined,
         // Ensure visibility is a valid EventVisibility type
         visibility: isValidVisibility(data.visibility) ? data.visibility : 'public'
       };
@@ -52,7 +49,7 @@ export const useEvent = (id: string | undefined) => {
     attendeeId: string, 
     email: string, 
     name: string, 
-    status: 'going' | 'maybe' | 'not_going'
+    status: RSVPStatus
   ) => {
     if (!id || !event) return { success: false };
     
@@ -63,23 +60,34 @@ export const useEvent = (id: string | undefined) => {
       rsvpStatus: status
     };
 
-    // Create a copy of the current attendees_by_status
-    const updatedStatusGroups = { ...event.attendees_by_status };
+    // Initialize the status groups if they don't exist
+    const updatedStatusGroups = event.attendees_by_status || { 
+      going: [], 
+      maybe: [], 
+      not_going: [] 
+    };
+    
+    // Create a deep copy to avoid mutating the state directly
+    const statusGroups = {
+      going: [...updatedStatusGroups.going],
+      maybe: [...updatedStatusGroups.maybe],
+      not_going: [...updatedStatusGroups.not_going]
+    };
     
     // Remove the attendee from all status groups
-    Object.keys(updatedStatusGroups).forEach(key => {
-      const statusKey = key as 'going' | 'maybe' | 'not_going';
-      updatedStatusGroups[statusKey] = updatedStatusGroups[statusKey].filter(a => a.id !== attendeeId);
+    Object.keys(statusGroups).forEach(key => {
+      const statusKey = key as RSVPStatus;
+      statusGroups[statusKey] = statusGroups[statusKey].filter(a => a.id !== attendeeId);
     });
     
     // Add the attendee to the appropriate status group
-    updatedStatusGroups[status] = [...updatedStatusGroups[status], attendee];
+    statusGroups[status] = [...statusGroups[status], attendee];
     
-    // Update the database
+    // Update the database with structured data that matches the expected JSON format
     const { error } = await supabase
       .from('events')
       .update({
-        attendees_by_status: updatedStatusGroups
+        attendees_by_status: statusGroups as any
       })
       .eq('id', id);
     
