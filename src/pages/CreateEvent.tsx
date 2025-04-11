@@ -1,6 +1,5 @@
-
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,10 +22,17 @@ import {
 import { toast } from 'sonner';
 import { Calendar } from 'lucide-react';
 import { EventVisibility } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { isValidVisibility } from '@/utils/typeGuards';
 
 const CreateEvent = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  
+  const communityId = searchParams.get('communityId');
   
   const [formData, setFormData] = useState({
     title: '',
@@ -38,7 +44,15 @@ const CreateEvent = () => {
     visibility: 'public' as EventVisibility,
     isPaid: false,
     price: 0,
+    communityId: communityId || '',
   });
+  
+  useEffect(() => {
+    if (!user) {
+      toast.error('You must be logged in to create an event');
+      navigate('/login');
+    }
+  }, [user, navigate]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -63,16 +77,61 @@ const CreateEvent = () => {
     });
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast.error('You must be logged in to create an event');
+      navigate('/login');
+      return;
+    }
+    
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const dateTime = new Date(`${formData.date}T${formData.time}`);
+      
+      if (isNaN(dateTime.getTime())) {
+        throw new Error('Invalid date or time');
+      }
+      
+      const visibility = isValidVisibility(formData.visibility) 
+        ? formData.visibility 
+        : 'public';
+      
+      const eventData = {
+        title: formData.title,
+        description: formData.description,
+        date_time: dateTime.toISOString(),
+        location: formData.location,
+        capacity: formData.capacity,
+        visibility: visibility,
+        host_id: user.id,
+        host_name: user.name || 'Anonymous Host',
+        attendees: [],
+        waitlist: [],
+        is_paid: formData.isPaid,
+        price: formData.isPaid ? formData.price : null,
+        community_id: formData.communityId || null,
+      };
+      
+      const { data, error } = await supabase
+        .from('events')
+        .insert(eventData)
+        .select('id')
+        .single();
+      
+      if (error) throw error;
+      
       toast.success('Event created successfully!');
+      
+      navigate(`/event/${data.id}`);
+    } catch (error) {
+      console.error('Error creating event:', error);
+      toast.error(`Failed to create event: ${(error as Error).message}`);
+    } finally {
       setIsLoading(false);
-      navigate('/'); // Would navigate to the new event detail page in a real app
-    }, 1000);
+    }
   };
   
   return (
@@ -187,7 +246,9 @@ const CreateEvent = () => {
                     <SelectContent>
                       <SelectItem value="public">Public</SelectItem>
                       <SelectItem value="private">Private (invitation only)</SelectItem>
-                      <SelectItem value="community">Community</SelectItem>
+                      {formData.communityId && (
+                        <SelectItem value="community">Community</SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>

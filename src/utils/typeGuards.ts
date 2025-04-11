@@ -15,7 +15,7 @@ export const jsonToAttendees = (json: Json | null): Attendee[] => {
   if (!json || !Array.isArray(json)) return [];
   
   // Filter and cast only items that pass our type guard
-  return json.filter(isAttendee);
+  return json.filter(isAttendee) as Attendee[];
 };
 
 // Type guard to check if a value is a valid EventVisibility
