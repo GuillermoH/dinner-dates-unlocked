@@ -17,38 +17,39 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
-import { Mail, Phone, ArrowRight } from 'lucide-react';
+import { ArrowRight, Mail, Phone } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [sentCode, setSentCode] = useState(false);
+  const [method, setMethod] = useState<'email' | 'phone'>('email');
   
-  const handleSendCode = (e: React.FormEvent) => {
+  const { signInWithOtp, verifyOtp, isLoading } = useAuth();
+  
+  const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      toast.success('Verification code sent!');
-      setIsLoading(false);
-      setSentCode(true);
-    }, 1000);
+    if (method === 'email') {
+      await signInWithOtp(email, undefined);
+    } else {
+      await signInWithOtp(undefined, phone);
+    }
+    
+    setSentCode(true);
   };
   
-  const handleVerifyCode = (e: React.FormEvent) => {
+  const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      toast.success('Successfully verified!');
-      setIsLoading(false);
-      // Would redirect to home or previous page in a real app
-    }, 1000);
+    if (method === 'email') {
+      await verifyOtp(email, undefined, code);
+    } else {
+      await verifyOtp(undefined, phone, code);
+    }
   };
   
   return (
@@ -62,7 +63,7 @@ const Login = () => {
         </CardHeader>
         <CardContent>
           {!sentCode ? (
-            <Tabs defaultValue="email">
+            <Tabs defaultValue="email" onValueChange={(value) => setMethod(value as 'email' | 'phone')}>
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="email">Email</TabsTrigger>
                 <TabsTrigger value="phone">Phone</TabsTrigger>
@@ -111,7 +112,7 @@ const Login = () => {
                         <Input 
                           id="phone"
                           type="tel"
-                          placeholder="(123) 456-7890"
+                          placeholder="+1 (123) 456-7890"
                           value={phone}
                           onChange={(e) => setPhone(e.target.value)}
                           className="pl-10"
@@ -119,7 +120,7 @@ const Login = () => {
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        We'll send a verification code via SMS to this number.
+                        We'll send a verification code via SMS to this number. Please include the country code.
                       </p>
                     </div>
                     
@@ -139,23 +140,32 @@ const Login = () => {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="code">Verification Code</Label>
-                  <Input 
-                    id="code"
-                    placeholder="Enter the 6-digit code"
-                    value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                    maxLength={6}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Enter the code we sent to {email || phone}
+                  <div className="flex justify-center py-2">
+                    <InputOTP 
+                      maxLength={6}
+                      value={code}
+                      onChange={setCode}
+                      required
+                    >
+                      <InputOTPGroup>
+                        <InputOTPSlot index={0} />
+                        <InputOTPSlot index={1} />
+                        <InputOTPSlot index={2} />
+                        <InputOTPSlot index={3} />
+                        <InputOTPSlot index={4} />
+                        <InputOTPSlot index={5} />
+                      </InputOTPGroup>
+                    </InputOTP>
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Enter the code we sent to {method === 'email' ? email : phone}
                   </p>
                 </div>
                 
                 <Button 
                   type="submit" 
                   className="w-full"
-                  disabled={isLoading}
+                  disabled={isLoading || code.length !== 6}
                 >
                   {isLoading ? 'Verifying...' : 'Verify Code'}
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -166,6 +176,7 @@ const Login = () => {
                   variant="link" 
                   className="w-full text-sm"
                   onClick={() => setSentCode(false)}
+                  disabled={isLoading}
                 >
                   Use a different email or phone
                 </Button>
