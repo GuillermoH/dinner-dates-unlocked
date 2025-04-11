@@ -14,6 +14,7 @@ export const isAttendee = (value: any): value is Attendee => {
 export const jsonToAttendees = (json: Json | null): Attendee[] => {
   if (!json || !Array.isArray(json)) return [];
   
+  // Filter and cast only items that pass our type guard
   return json.filter(isAttendee);
 };
 

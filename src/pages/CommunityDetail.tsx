@@ -4,6 +4,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 import CommunityHeader from '@/components/community/CommunityHeader';
 import CommunityEvents from '@/components/community/CommunityEvents';
 import { useCommunity } from '@/hooks/useCommunity';
