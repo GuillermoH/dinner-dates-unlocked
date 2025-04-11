@@ -24,17 +24,28 @@ export const useEvent = (id: string | undefined) => {
       
       if (error) throw error;
       
+      // Parse the attendees_by_status safely
+      let attendeesByStatus = { going: [], maybe: [], not_going: [] };
+      
+      if (data.attendees_by_status) {
+        // Check if attendees_by_status is an object and has the expected properties
+        const parsedStatus = data.attendees_by_status as any;
+        
+        if (parsedStatus && typeof parsedStatus === 'object') {
+          attendeesByStatus = {
+            going: Array.isArray(parsedStatus.going) ? jsonToAttendees(parsedStatus.going) : [],
+            maybe: Array.isArray(parsedStatus.maybe) ? jsonToAttendees(parsedStatus.maybe) : [],
+            not_going: Array.isArray(parsedStatus.not_going) ? jsonToAttendees(parsedStatus.not_going) : []
+          };
+        }
+      }
+      
       // Transform database event to SGDEvent type with proper type conversions
       const transformedEvent: SGDEvent = {
         ...data,
         attendees: jsonToAttendees(data.attendees),
         waitlist: jsonToAttendees(data.waitlist),
-        // Parse attendees_by_status if available
-        attendees_by_status: data.attendees_by_status ? {
-          going: jsonToAttendees(Array.isArray((data.attendees_by_status as any)?.going) ? (data.attendees_by_status as any).going : []),
-          maybe: jsonToAttendees(Array.isArray((data.attendees_by_status as any)?.maybe) ? (data.attendees_by_status as any).maybe : []),
-          not_going: jsonToAttendees(Array.isArray((data.attendees_by_status as any)?.not_going) ? (data.attendees_by_status as any).not_going : [])
-        } : undefined,
+        attendees_by_status: attendeesByStatus,
         // Ensure visibility is a valid EventVisibility type
         visibility: isValidVisibility(data.visibility) ? data.visibility : 'public'
       };
@@ -83,23 +94,28 @@ export const useEvent = (id: string | undefined) => {
     // Add the attendee to the appropriate status group
     statusGroups[status] = [...statusGroups[status], attendee];
     
-    // Update the database with structured data that matches the expected JSON format
-    const { error } = await supabase
-      .from('events')
-      .update({
-        attendees_by_status: statusGroups as any
-      })
-      .eq('id', id);
-    
-    if (error) {
-      console.error('Error updating RSVP status:', error);
-      return { success: false, error };
+    // Update the database with structured data
+    try {
+      const { error } = await supabase
+        .from('events')
+        .update({
+          attendees_by_status: statusGroups
+        })
+        .eq('id', id);
+      
+      if (error) {
+        console.error('Error updating RSVP status:', error);
+        return { success: false, error };
+      }
+      
+      // Refetch to get the updated data
+      await refetch();
+      
+      return { success: true };
+    } catch (err) {
+      console.error('Error in update function:', err);
+      return { success: false, error: err };
     }
-    
-    // Refetch to get the updated data
-    await refetch();
-    
-    return { success: true };
   };
 
   return {

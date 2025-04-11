@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,13 +13,34 @@ import { v4 as uuidv4 } from 'uuid';
 import RSVPStatusDialog from '@/components/RSVPStatusDialog';
 import AttendeesList from '@/components/AttendeesList';
 import { RSVPStatus } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 const EventDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [rsvpDialogOpen, setRsvpDialogOpen] = useState(false);
+  const { user } = useAuth();
   
   const { event, isLoading, error, updateRSVPStatus } = useEvent(id);
+  
+  // State to track the current user's RSVP status
+  const [userRsvpStatus, setUserRsvpStatus] = useState<RSVPStatus | null>(null);
+  
+  // Find the user's current RSVP status when the event data loads
+  useEffect(() => {
+    if (event?.attendees_by_status && user) {
+      // Check all status groups for the current user
+      if (event.attendees_by_status.going.some(a => a.id === user.id)) {
+        setUserRsvpStatus('going');
+      } else if (event.attendees_by_status.maybe.some(a => a.id === user.id)) {
+        setUserRsvpStatus('maybe');
+      } else if (event.attendees_by_status.not_going.some(a => a.id === user.id)) {
+        setUserRsvpStatus('not_going');
+      } else {
+        setUserRsvpStatus(null);
+      }
+    }
+  }, [event, user]);
   
   if (isLoading) {
     return (
@@ -83,15 +105,65 @@ const EventDetail = () => {
   const availableSpots = Math.max(0, event.capacity - attendeeCount);
   const isFull = availableSpots === 0;
   
-  const handleRSVP = async (name: string, email: string, status: RSVPStatus) => {
-    const attendeeId = uuidv4();
-    return updateRSVPStatus(attendeeId, email, name, status);
+  const handleRSVP = async (status: RSVPStatus) => {
+    if (!user) {
+      toast.error("You must be logged in to RSVP");
+      return { success: false };
+    }
+    
+    return updateRSVPStatus(user.id, user.email || '', user.user_metadata?.name || 'Anonymous', status);
   };
   
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
     toast.success("Link copied to clipboard!");
   };
+  
+  // Generate an iCal file for the event
+  const generateICalFile = () => {
+    const icalContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//University SGDs Platform//EN
+BEGIN:VEVENT
+UID:${event.id}
+SUMMARY:${event.title}
+DESCRIPTION:${event.description.replace(/\n/g, '\\n')}
+LOCATION:${event.location}
+DTSTART:${format(eventDate, "yyyyMMdd'T'HHmmss")}
+DTEND:${format(new Date(eventDate.getTime() + 2 * 60 * 60 * 1000), "yyyyMMdd'T'HHmmss")}
+END:VEVENT
+END:VCALENDAR`;
+
+    const blob = new Blob([icalContent], { type: 'text/calendar' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${event.title.replace(/\s+/g, '-')}.ics`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
+  // Determine the RSVP button text based on user's status
+  const getRsvpButtonText = () => {
+    if (!userRsvpStatus) {
+      return isFull ? 'Join Waitlist' : 'RSVP Now';
+    }
+    
+    switch (userRsvpStatus) {
+      case 'going':
+        return 'You\'re Going';
+      case 'maybe':
+        return 'You\'re Maybe Going';
+      case 'not_going':
+        return 'You\'re Not Going';
+      default:
+        return 'Update RSVP';
+    }
+  };
+  
+  // Check if calendar button should be shown
+  const showCalendarButton = userRsvpStatus === 'going' || userRsvpStatus === 'maybe';
   
   return (
     <div className="container-custom py-8">
@@ -175,9 +247,19 @@ const EventDetail = () => {
                 <div className="space-y-4">
                   <Button 
                     className="w-full" 
-                    onClick={() => setRsvpDialogOpen(true)}
+                    onClick={() => {
+                      if (!user) {
+                        toast.error("You must be logged in to RSVP");
+                        navigate('/login');
+                        return;
+                      }
+                      setRsvpDialogOpen(true);
+                    }}
+                    variant={userRsvpStatus === 'going' ? 'default' : 
+                             userRsvpStatus === 'maybe' ? 'secondary' : 
+                             userRsvpStatus === 'not_going' ? 'outline' : 'default'}
                   >
-                    {isFull ? 'Join Waitlist' : 'RSVP Now'}
+                    {getRsvpButtonText()}
                   </Button>
                   
                   <RSVPStatusDialog 
@@ -186,6 +268,7 @@ const EventDetail = () => {
                     onSubmit={handleRSVP}
                     eventIsPaid={event.is_paid}
                     eventPrice={event.price}
+                    currentStatus={userRsvpStatus}
                   />
                   
                   <Button 
@@ -197,13 +280,16 @@ const EventDetail = () => {
                     Share
                   </Button>
                   
-                  <Button
-                    variant="outline"
-                    className="w-full flex items-center justify-center gap-2"
-                  >
-                    <CalendarIcon className="h-4 w-4" />
-                    Add to Calendar
-                  </Button>
+                  {showCalendarButton && (
+                    <Button
+                      variant="outline"
+                      className="w-full flex items-center justify-center gap-2"
+                      onClick={generateICalFile}
+                    >
+                      <CalendarIcon className="h-4 w-4" />
+                      Add to Calendar
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>

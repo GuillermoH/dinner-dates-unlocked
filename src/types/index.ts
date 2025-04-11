@@ -9,6 +9,11 @@ export interface User {
   phone?: string;
   venmoHandle?: string;
   communities?: string[];
+  user_metadata?: {
+    name?: string;
+    email?: string;
+    [key: string]: any;
+  };
 }
 
 export interface Community {
