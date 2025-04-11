@@ -14,9 +14,7 @@ export const isAttendee = (value: any): value is Attendee => {
 export const jsonToAttendees = (json: Json | null): Attendee[] => {
   if (!json || !Array.isArray(json)) return [];
   
-  // Use type assertion to unknown first, then filter using type guard
-  const unknownArray = json as unknown[];
-  return unknownArray.filter(isAttendee);
+  return (json as unknown[]).filter(isAttendee);
 };
 
 // Type guard to check if a value is a valid EventVisibility

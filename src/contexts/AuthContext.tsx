@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -27,6 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_, session) => {
+        console.log("Auth state changed:", session ? "Logged in" : "Logged out");
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
@@ -35,6 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Then check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Initial session check:", session ? "Session found" : "No session");
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
@@ -118,20 +121,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithPassword = async (email: string, password: string) => {
     setIsLoading(true);
     try {
+      console.log("Attempting to sign in with:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
       if (error) {
+        console.error("Sign in error details:", error);
         throw error;
       }
 
+      console.log("Sign in successful, user:", data.user);
       toast.success('Successfully logged in!');
       navigate('/');
     } catch (error: any) {
-      toast.error(error.message || 'Failed to sign in');
-      console.error('Error signing in with password:', error);
+      console.error("Error signing in with password:", error);
+      
+      // Provide more specific error messages based on error type
+      if (error.message === "Invalid login credentials") {
+        toast.error('Invalid email or password. Please check your credentials and try again.');
+      } else {
+        toast.error(error.message || 'Failed to sign in');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -140,6 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signUpWithPassword = async (email: string, password: string) => {
     setIsLoading(true);
     try {
+      console.log("Attempting to sign up with:", email);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -149,13 +162,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
+        console.error("Sign up error details:", error);
         throw error;
       }
 
-      toast.success('Registration successful! Please check your email for verification.');
+      console.log("Sign up response:", data);
+      
+      // Check if user is new or already exists
+      if (data?.user && data.session) {
+        // User was created and is signed in
+        toast.success('Registration successful! You are now logged in.');
+        navigate('/');
+      } else if (data?.user) {
+        // User was created but needs email confirmation
+        toast.success('Registration successful! Please check your email for verification.');
+      } else {
+        toast.info('Please check your email to continue the registration process.');
+      }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to sign up');
-      console.error('Error signing up with password:', error);
+      console.error("Error signing up with password:", error);
+      
+      // Provide more specific error messages based on error code
+      if (error.message.includes("already registered")) {
+        toast.error('This email is already registered. Please try logging in instead.');
+      } else {
+        toast.error(error.message || 'Failed to sign up');
+      }
     } finally {
       setIsLoading(false);
     }
