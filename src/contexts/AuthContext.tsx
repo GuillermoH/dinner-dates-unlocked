@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -11,6 +10,8 @@ type AuthContextType = {
   isLoading: boolean;
   signInWithOtp: (email?: string, phone?: string) => Promise<void>;
   verifyOtp: (email: string | undefined, phone: string | undefined, token: string) => Promise<void>;
+  signInWithPassword: (email: string, password: string) => Promise<void>;
+  signUpWithPassword: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -83,7 +84,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       let verifyResult;
       
-      // Handle email OTP verification
       if (email) {
         verifyResult = await supabase.auth.verifyOtp({
           email,
@@ -91,7 +91,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           type: 'email'
         });
       } 
-      // Handle phone OTP verification
       else if (phone) {
         verifyResult = await supabase.auth.verifyOtp({
           phone,
@@ -116,6 +115,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const signInWithPassword = async (email: string, password: string) => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success('Successfully logged in!');
+      navigate('/');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to sign in');
+      console.error('Error signing in with password:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const signUpWithPassword = async (email: string, password: string) => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: window.location.origin
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success('Registration successful! Please check your email for verification.');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to sign up');
+      console.error('Error signing up with password:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
@@ -134,6 +179,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isLoading,
       signInWithOtp,
       verifyOtp,
+      signInWithPassword,
+      signUpWithPassword,
       signOut
     }}>
       {children}

@@ -17,18 +17,31 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowRight, Mail, Phone } from 'lucide-react';
+import { ArrowRight, Mail, Phone, Lock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [sentCode, setSentCode] = useState(false);
-  const [method, setMethod] = useState<'email' | 'phone'>('email');
+  const [method, setMethod] = useState<'email' | 'phone' | 'password'>('email');
+  const [isSignUp, setIsSignUp] = useState(false);
   
-  const { signInWithOtp, verifyOtp, isLoading } = useAuth();
+  const { signInWithOtp, verifyOtp, signInWithPassword, signUpWithPassword, isLoading } = useAuth();
   
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +64,28 @@ const Login = () => {
       await verifyOtp(undefined, phone, code);
     }
   };
+
+  // Define the form schema for password login/signup
+  const formSchema = z.object({
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(6, "Password must be at least 6 characters")
+  });
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: "",
+      password: ""
+    }
+  });
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (isSignUp) {
+      await signUpWithPassword(values.email, values.password);
+    } else {
+      await signInWithPassword(values.email, values.password);
+    }
+  };
   
   return (
     <div className="container-custom py-12 max-w-md mx-auto">
@@ -60,15 +95,20 @@ const Login = () => {
           <CardDescription>
             {method === 'email' 
               ? 'No passwords needed! We\'ll send you a secure login link via email.'
-              : 'No passwords needed! We\'ll send you a one-time code to verify your identity.'}
+              : method === 'phone'
+              ? 'No passwords needed! We\'ll send you a one-time code to verify your identity.'
+              : isSignUp
+              ? 'Create an account with email and password.'
+              : 'Login with your email and password.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {!sentCode ? (
-            <Tabs defaultValue="email" onValueChange={(value) => setMethod(value as 'email' | 'phone')}>
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="email">Email</TabsTrigger>
-                <TabsTrigger value="phone">Phone</TabsTrigger>
+            <Tabs defaultValue="email" onValueChange={(value) => setMethod(value as 'email' | 'phone' | 'password')}>
+              <TabsList className="grid w-full grid-cols-3 mb-6">
+                <TabsTrigger value="email">Email OTP</TabsTrigger>
+                <TabsTrigger value="phone">Phone OTP</TabsTrigger>
+                <TabsTrigger value="password">Password</TabsTrigger>
               </TabsList>
               
               <TabsContent value="email">
@@ -135,6 +175,67 @@ const Login = () => {
                     </Button>
                   </div>
                 </form>
+              </TabsContent>
+              
+              <TabsContent value="password">
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <FormControl>
+                              <Input 
+                                placeholder="your.email@example.com" 
+                                className="pl-10"
+                                {...field} 
+                              />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Password</FormLabel>
+                          <div className="relative">
+                            <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <FormControl>
+                              <Input 
+                                type="password" 
+                                placeholder="••••••••" 
+                                className="pl-10"
+                                {...field} 
+                              />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="flex justify-between items-center">
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="px-0"
+                        onClick={() => setIsSignUp(!isSignUp)}
+                      >
+                        {isSignUp ? "Already have an account? Sign in" : "Don't have an account? Sign up"}
+                      </Button>
+                      <Button type="submit" disabled={isLoading}>
+                        {isLoading ? "Processing..." : isSignUp ? "Sign Up" : "Sign In"}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
               </TabsContent>
             </Tabs>
           ) : (
