@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,31 +5,21 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin, Users, Clock, Share2, ArrowLeft, Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useEvent } from '@/hooks/useEvent';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { v4 as uuidv4 } from 'uuid';
+import RSVPStatusDialog from '@/components/RSVPStatusDialog';
+import AttendeesList from '@/components/AttendeesList';
+import { RSVPStatus } from '@/types';
 
 const EventDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [rsvpDialogOpen, setRsvpDialogOpen] = useState(false);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
   
-  const { event, isLoading, error } = useEvent(id);
+  const { event, isLoading, error, updateRSVPStatus } = useEvent(id);
   
-  // If loading, show skeleton
   if (isLoading) {
     return (
       <div className="container-custom py-8">
@@ -70,7 +59,6 @@ const EventDetail = () => {
     );
   }
   
-  // If there's an error or no event found
   if (error || !event) {
     return (
       <div className="container-custom py-12 text-center">
@@ -90,19 +78,17 @@ const EventDetail = () => {
   const formattedDate = format(eventDate, "EEEE, MMMM d, yyyy");
   const formattedTime = format(eventDate, "h:mm a");
   
-  const attendeeCount = event.attendees.length;
+  const attendeeCount = (event.attendees_by_status?.going.length || 0) + 
+                        (event.attendees_by_status?.maybe.length || 0);
   const availableSpots = Math.max(0, event.capacity - attendeeCount);
   const isFull = availableSpots === 0;
   
-  const handleRSVP = (e: React.FormEvent) => {
-    e.preventDefault();
-    // This would normally connect to a backend to save the RSVP
-    toast.success("RSVP successful! Check your email for confirmation.");
-    setRsvpDialogOpen(false);
+  const handleRSVP = async (name: string, email: string, status: RSVPStatus) => {
+    const attendeeId = uuidv4();
+    return updateRSVPStatus(attendeeId, email, name, status);
   };
   
   const handleShare = () => {
-    // Would normally use proper sharing APIs
     navigator.clipboard.writeText(window.location.href);
     toast.success("Link copied to clipboard!");
   };
@@ -121,15 +107,19 @@ const EventDetail = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-2">
           <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-3xl font-bold">{event.title}</h1>
-              <Badge 
-                variant={event.visibility === "public" ? "default" : 
-                        event.visibility === "community" ? "secondary" : "outline"}
-              >
-                {event.visibility === "public" ? "Public" : 
-                 event.visibility === "community" ? "Community" : "Private"}
-              </Badge>
+            <div>
+              <div className="flex flex-wrap items-center gap-2 mb-1">
+                <h1 className="text-3xl font-bold">{event.title}</h1>
+                <Badge 
+                  variant={event.visibility === "public" ? "default" : 
+                          event.visibility === "community" ? "secondary" : "outline"}
+                >
+                  {event.visibility === "public" ? "Public" : 
+                  event.visibility === "community" ? "Community" : "Private"}
+                </Badge>
+              </div>
+              
+              <p className="text-muted-foreground mb-4">Hosted by {event.host_name}</p>
             </div>
             
             <div className="flex flex-col gap-2 text-muted-foreground">
@@ -166,120 +156,66 @@ const EventDetail = () => {
               <h2 className="text-xl font-semibold mb-2">About this event</h2>
               <p className="text-base whitespace-pre-line">{event.description}</p>
             </div>
-            
-            <div className="mt-6">
-              <h2 className="text-xl font-semibold mb-2">Hosted by</h2>
-              <p>{event.host_name}</p>
-            </div>
           </div>
         </div>
         
         <div className="md:col-span-1">
-          <div className="sticky top-24 bg-white rounded-lg border p-6 shadow-sm">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold mb-1">
-                {event.is_paid ? `$${event.price}` : 'Free Event'}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {isFull ? 'This event is full' : `${availableSpots} spots remaining`}
-              </p>
-            </div>
-            
-            <div className="space-y-4">
-              <Dialog open={rsvpDialogOpen} onOpenChange={setRsvpDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="w-full">
+          <div className="sticky top-24 space-y-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold mb-1">
+                    {event.is_paid ? `$${event.price}` : 'Free Event'}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {isFull ? 'This event is full' : `${availableSpots} spots remaining`}
+                  </p>
+                </div>
+                
+                <div className="space-y-4">
+                  <Button 
+                    className="w-full" 
+                    onClick={() => setRsvpDialogOpen(true)}
+                  >
                     {isFull ? 'Join Waitlist' : 'RSVP Now'}
                   </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>
-                      {isFull ? 'Join the Waitlist' : 'RSVP to this event'}
-                    </DialogTitle>
-                    <DialogDescription>
-                      Fill out your details below to {isFull ? 'join the waitlist' : 'reserve your spot'}.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <form onSubmit={handleRSVP} className="space-y-4 mt-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Name</Label>
-                      <Input
-                        id="name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Your name"
-                        required
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="your.email@example.com"
-                        required
-                      />
-                    </div>
-                    {event.is_paid && (
-                      <div className="text-sm text-muted-foreground">
-                        <p>This is a paid event. After RSVP, you'll receive payment instructions.</p>
-                      </div>
-                    )}
-                    <DialogFooter>
-                      <Button type="submit" className="w-full">
-                        {isFull ? 'Join Waitlist' : 'Confirm RSVP'}
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </DialogContent>
-              </Dialog>
-              
-              <Button 
-                variant="outline" 
-                className="w-full flex items-center justify-center gap-2"
-                onClick={handleShare}
-              >
-                <Share2 className="h-4 w-4" />
-                Share
-              </Button>
-              
-              <Button
-                variant="outline"
-                className="w-full flex items-center justify-center gap-2"
-              >
-                <CalendarIcon className="h-4 w-4" />
-                Add to Calendar
-              </Button>
-            </div>
+                  
+                  <RSVPStatusDialog 
+                    isOpen={rsvpDialogOpen} 
+                    onOpenChange={setRsvpDialogOpen}
+                    onSubmit={handleRSVP}
+                    eventIsPaid={event.is_paid}
+                    eventPrice={event.price}
+                  />
+                  
+                  <Button 
+                    variant="outline" 
+                    className="w-full flex items-center justify-center gap-2"
+                    onClick={handleShare}
+                  >
+                    <Share2 className="h-4 w-4" />
+                    Share
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    className="w-full flex items-center justify-center gap-2"
+                  >
+                    <CalendarIcon className="h-4 w-4" />
+                    Add to Calendar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
             
-            {attendeeCount > 0 && (
-              <div className="mt-8">
-                <h3 className="text-lg font-semibold mb-2">Attendees ({attendeeCount})</h3>
-                <ul className="space-y-2">
-                  {event.attendees.map(attendee => (
-                    <li key={attendee.id} className="text-sm">
-                      {attendee.name}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            
-            {event.waitlist.length > 0 && (
-              <div className="mt-4">
-                <h3 className="text-lg font-semibold mb-2">Waitlist ({event.waitlist.length})</h3>
-                <ul className="space-y-2">
-                  {event.waitlist.map(attendee => (
-                    <li key={attendee.id} className="text-sm">
-                      {attendee.name}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold mb-4">Attendees</h3>
+                <AttendeesList 
+                  attendeesByStatus={event.attendees_by_status || { going: [], maybe: [], not_going: [] }}
+                />
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

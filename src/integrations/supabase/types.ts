@@ -42,6 +42,7 @@ export type Database = {
       events: {
         Row: {
           attendees: Json | null
+          attendees_by_status: Json | null
           capacity: number
           community_id: string | null
           created_at: string
@@ -61,6 +62,7 @@ export type Database = {
         }
         Insert: {
           attendees?: Json | null
+          attendees_by_status?: Json | null
           capacity?: number
           community_id?: string | null
           created_at?: string
@@ -80,6 +82,7 @@ export type Database = {
         }
         Update: {
           attendees?: Json | null
+          attendees_by_status?: Json | null
           capacity?: number
           community_id?: string | null
           created_at?: string
@@ -142,7 +145,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      migrate_attendees_to_status: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

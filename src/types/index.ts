@@ -1,5 +1,6 @@
 
 export type EventVisibility = "public" | "private" | "community";
+export type RSVPStatus = "going" | "maybe" | "not_going";
 
 export interface User {
   id: string;
@@ -32,6 +33,11 @@ export interface SGDEvent {
   host_name: string;  // Changed from hostName to match DB column
   attendees: Attendee[];
   waitlist: Attendee[];
+  attendees_by_status?: {
+    going: Attendee[];
+    maybe: Attendee[];
+    not_going: Attendee[];
+  };
   image?: string;
   is_paid: boolean;   // Changed from isPaid to match DB column
   price?: number;
@@ -45,4 +51,5 @@ export interface Attendee {
   name: string;
   email: string;
   paymentStatus?: "pending" | "confirmed";
+  rsvpStatus?: RSVPStatus;
 }
