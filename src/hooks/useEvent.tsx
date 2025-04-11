@@ -4,8 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { SGDEvent, Attendee, RSVPStatus } from '@/types';
 import { jsonToAttendees, isValidVisibility } from '@/utils/typeGuards';
 import { Json } from '@/integrations/supabase/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useEvent = (id: string | undefined) => {
+  const { user } = useAuth();
+  
   const { 
     data: event, 
     isLoading, 
@@ -95,11 +98,37 @@ export const useEvent = (id: string | undefined) => {
     statusGroups[status] = [...statusGroups[status], attendee];
     
     // Update the database with structured data
+    // We need to convert our strongly typed object to a format that matches the Json type in Supabase
     try {
+      // Convert the statusGroups object to a plain object that Supabase can handle
+      const supabaseFormat = {
+        going: statusGroups.going.map(a => ({
+          id: a.id,
+          name: a.name,
+          email: a.email,
+          rsvpStatus: a.rsvpStatus,
+          paymentStatus: a.paymentStatus
+        })),
+        maybe: statusGroups.maybe.map(a => ({
+          id: a.id,
+          name: a.name,
+          email: a.email,
+          rsvpStatus: a.rsvpStatus,
+          paymentStatus: a.paymentStatus
+        })),
+        not_going: statusGroups.not_going.map(a => ({
+          id: a.id,
+          name: a.name,
+          email: a.email,
+          rsvpStatus: a.rsvpStatus,
+          paymentStatus: a.paymentStatus
+        }))
+      };
+
       const { error } = await supabase
         .from('events')
         .update({
-          attendees_by_status: statusGroups
+          attendees_by_status: supabaseFormat
         })
         .eq('id', id);
       
@@ -118,10 +147,26 @@ export const useEvent = (id: string | undefined) => {
     }
   };
 
+  // Check if current user has RSVPed to this event
+  const getUserRsvpStatus = (): RSVPStatus | null => {
+    if (!event?.attendees_by_status || !user) return null;
+    
+    if (event.attendees_by_status.going.some(a => a.id === user.id)) {
+      return 'going';
+    } else if (event.attendees_by_status.maybe.some(a => a.id === user.id)) {
+      return 'maybe';
+    } else if (event.attendees_by_status.not_going.some(a => a.id === user.id)) {
+      return 'not_going';
+    }
+    
+    return null;
+  };
+
   return {
     event,
     isLoading,
     error,
-    updateRSVPStatus
+    updateRSVPStatus,
+    getUserRsvpStatus
   };
 };
