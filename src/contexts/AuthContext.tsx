@@ -81,15 +81,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const verifyOtp = async (email: string | undefined, phone: string | undefined, token: string) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        email,
-        phone,
-        token,
-        type: 'sms' // This works for both email and SMS OTPs in Supabase
-      });
+      let verifyResult;
+      
+      // Handle email OTP verification
+      if (email) {
+        verifyResult = await supabase.auth.verifyOtp({
+          email,
+          token,
+          type: 'email'
+        });
+      } 
+      // Handle phone OTP verification
+      else if (phone) {
+        verifyResult = await supabase.auth.verifyOtp({
+          phone,
+          token,
+          type: 'sms'
+        });
+      } else {
+        throw new Error('Either email or phone is required for verification');
+      }
 
-      if (error) {
-        throw error;
+      if (verifyResult.error) {
+        throw verifyResult.error;
       }
 
       toast.success('Successfully logged in!');
