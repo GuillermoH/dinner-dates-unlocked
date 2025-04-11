@@ -111,6 +111,7 @@ const CreateEvent = () => {
         console.warn('Could not fetch user profile:', profileError);
       }
       
+      // Determine host name, falling back to email or phone if no name is available
       const hostName = profileData?.name || user.email || user.phone || 'Anonymous Host';
       
       const eventData = {
