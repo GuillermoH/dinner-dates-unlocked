@@ -89,7 +89,7 @@ const Login = () => {
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        We'll send a secure login link to this email address.
+                        We&apos;ll send a secure login link to this email address.
                       </p>
                     </div>
                     
@@ -122,7 +122,7 @@ const Login = () => {
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        We'll send a verification code via SMS to this number. Please include the country code.
+                        We&apos;ll send a verification code via SMS to this number. Please include the country code.
                       </p>
                     </div>
                     
@@ -144,10 +144,10 @@ const Login = () => {
                   <Mail className="mx-auto h-12 w-12 text-primary" />
                   <h3 className="text-lg font-medium">Check your email</h3>
                   <p className="text-muted-foreground">
-                    We've sent a magic link to <span className="font-medium">{email}</span>
+                    We&apos;ve sent a magic link to <span className="font-medium">{email}</span>
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Click the link in the email to sign in automatically. If you don't see it, check your spam folder.
+                    Click the link in the email to sign in automatically. If you don&apos;t see it, check your spam folder.
                   </p>
                 </div>
                 
