@@ -7,7 +7,7 @@ import { Loader2, Calendar, PlusCircle, ArrowLeft, Users } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Community, SGDEvent, Attendee } from '@/types';
+import { Community, SGDEvent, Attendee, EventVisibility } from '@/types';
 import EventList from '@/components/EventList';
 import { toast } from 'sonner';
 import { Json } from '@/integrations/supabase/types';
@@ -25,6 +25,11 @@ const jsonToAttendees = (json: Json | null): Attendee[] => {
   if (!json || !Array.isArray(json)) return [];
   
   return json.filter(isAttendee);
+};
+
+// Type guard to check if a value is a valid EventVisibility
+const isValidVisibility = (value: string): value is EventVisibility => {
+  return ['public', 'private', 'community'].includes(value);
 };
 
 const CommunityDetail = () => {
@@ -73,11 +78,13 @@ const CommunityDetail = () => {
     enabled: !!id,
   });
 
-  // Transform database events to SGDEvent type
+  // Transform database events to SGDEvent type with proper type conversions
   const events: SGDEvent[] | undefined = eventsData?.map(event => ({
     ...event,
     attendees: jsonToAttendees(event.attendees),
-    waitlist: jsonToAttendees(event.waitlist)
+    waitlist: jsonToAttendees(event.waitlist),
+    // Ensure visibility is a valid EventVisibility type
+    visibility: isValidVisibility(event.visibility) ? event.visibility : 'public'
   }));
 
   // Join community mutation
