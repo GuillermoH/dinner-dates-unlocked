@@ -25,66 +25,68 @@ const EventCard: React.FC<EventCardProps> = ({ event, className }) => {
   return (
     <div className={cn("event-card", className)}>
       <div className="flex flex-col h-full">
-        {event.image && (
-          <div className="mb-3 -mx-4 -mt-4 overflow-hidden rounded-t-lg">
-            <img 
-              src={event.image} 
-              alt={event.title} 
-              className="w-full h-40 object-cover"
-            />
+        <Link to={`/event/${event.id}`} className="flex-grow">
+          {event.image && (
+            <div className="mb-3 -mx-4 -mt-4 overflow-hidden rounded-t-lg">
+              <img 
+                src={event.image} 
+                alt={event.title} 
+                className="w-full h-40 object-cover"
+              />
+            </div>
+          )}
+          
+          <div className="flex flex-col flex-grow">
+            <div className="flex items-start justify-between mb-2">
+              <h3 className="text-lg font-semibold line-clamp-1">{event.title}</h3>
+              <Badge 
+                variant={event.visibility === "public" ? "default" : 
+                        event.visibility === "community" ? "secondary" : "outline"}
+                className="ml-2 whitespace-nowrap"
+              >
+                {event.visibility === "public" ? "Public" : 
+                event.visibility === "community" ? "Community" : "Private"}
+              </Badge>
+            </div>
+            
+            <p className="text-muted-foreground text-sm mb-4 line-clamp-2 flex-grow">
+              {event.description}
+            </p>
+            
+            <div className="flex flex-col gap-1 mb-4 text-sm">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <span>{formattedDate}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span>{formattedTime}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <span className="line-clamp-1">{event.location}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <span>{attendeeCount} / {event.capacity} spots filled</span>
+              </div>
+            </div>
           </div>
-        )}
+        </Link>
         
-        <div className="flex flex-col flex-grow">
-          <div className="flex items-start justify-between mb-2">
-            <h3 className="text-lg font-semibold line-clamp-1">{event.title}</h3>
-            <Badge 
-              variant={event.visibility === "public" ? "default" : 
-                      event.visibility === "community" ? "secondary" : "outline"}
-              className="ml-2 whitespace-nowrap"
-            >
-              {event.visibility === "public" ? "Public" : 
-               event.visibility === "community" ? "Community" : "Private"}
-            </Badge>
+        <div className="flex justify-between items-center mt-auto">
+          <div className="text-sm">
+            {event.is_paid ? (
+              <span className="font-medium">${event.price}</span>
+            ) : (
+              <span className="text-success font-medium">Free</span>
+            )}
           </div>
-          
-          <p className="text-muted-foreground text-sm mb-4 line-clamp-2 flex-grow">
-            {event.description}
-          </p>
-          
-          <div className="flex flex-col gap-1 mb-4 text-sm">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span>{formattedDate}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span>{formattedTime}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-              <span className="line-clamp-1">{event.location}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <span>{attendeeCount} / {event.capacity} spots filled</span>
-            </div>
-          </div>
-          
-          <div className="flex justify-between items-center mt-auto">
-            <div className="text-sm">
-              {event.is_paid ? (
-                <span className="font-medium">${event.price}</span>
-              ) : (
-                <span className="text-success font-medium">Free</span>
-              )}
-            </div>
-            <Link to={`/event/${event.id}`}>
-              <Button variant={isFull ? "outline" : "default"}>
-                {isFull ? "Join Waitlist" : "RSVP"}
-              </Button>
-            </Link>
-          </div>
+          <Link to={`/event/${event.id}`}>
+            <Button variant={isFull ? "outline" : "default"}>
+              {isFull ? "Join Waitlist" : "RSVP"}
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

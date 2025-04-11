@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { mockEvents } from '@/data/mockData';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin, Users, Clock, Share2, ArrowLeft, Calendar as CalendarIcon } from 'lucide-react';
@@ -18,6 +17,9 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useEvent } from '@/hooks/useEvent';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const EventDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -26,13 +28,56 @@ const EventDetail = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   
-  const event = mockEvents.find(e => e.id === id);
+  const { event, isLoading, error } = useEvent(id);
   
-  if (!event) {
+  // If loading, show skeleton
+  if (isLoading) {
+    return (
+      <div className="container-custom py-8">
+        <Button 
+          variant="ghost" 
+          className="mb-6" 
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="md:col-span-2">
+            <Skeleton className="h-10 w-3/4 mb-4" />
+            <div className="space-y-4">
+              <Skeleton className="h-6 w-1/2" />
+              <Skeleton className="h-6 w-1/3" />
+              <Skeleton className="h-6 w-2/3" />
+            </div>
+            <Skeleton className="h-80 w-full my-6" />
+            <Skeleton className="h-8 w-1/4 mt-6 mb-2" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+          <div className="md:col-span-1">
+            <Card>
+              <CardContent className="p-6">
+                <Skeleton className="h-8 w-3/4 mb-4" />
+                <Skeleton className="h-10 w-full mb-4" />
+                <Skeleton className="h-10 w-full mb-4" />
+                <Skeleton className="h-10 w-full" />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
+  // If there's an error or no event found
+  if (error || !event) {
     return (
       <div className="container-custom py-12 text-center">
         <h2 className="text-2xl font-bold mb-4">Event Not Found</h2>
-        <p className="mb-6">The event you're looking for doesn't exist.</p>
+        <p className="mb-6">
+          {error ? `Error: ${(error as Error).message}` : "The event you're looking for doesn't exist."}
+        </p>
         <Button onClick={() => navigate('/')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Home
