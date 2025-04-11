@@ -59,8 +59,8 @@ const Login = () => {
           <CardTitle className="text-2xl">Verify Your Identity</CardTitle>
           <CardDescription>
             {method === 'email' 
-              ? 'No passwords needed! We'll send you a secure login link via email.'
-              : 'No passwords needed! We'll send you a one-time code to verify your identity.'}
+              ? 'No passwords needed! We\'ll send you a secure login link via email.'
+              : 'No passwords needed! We\'ll send you a one-time code to verify your identity.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
