@@ -9,6 +9,104 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      communities: {
+        Row: {
+          admins: string[] | null
+          created_at: string
+          description: string | null
+          id: string
+          members: string[] | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          admins?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          members?: string[] | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          admins?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          members?: string[] | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      events: {
+        Row: {
+          attendees: Json | null
+          capacity: number
+          community_id: string | null
+          created_at: string
+          date_time: string
+          description: string
+          host_id: string
+          host_name: string
+          id: string
+          image: string | null
+          is_paid: boolean | null
+          location: string
+          price: number | null
+          title: string
+          updated_at: string
+          visibility: string
+          waitlist: Json | null
+        }
+        Insert: {
+          attendees?: Json | null
+          capacity?: number
+          community_id?: string | null
+          created_at?: string
+          date_time: string
+          description: string
+          host_id: string
+          host_name: string
+          id?: string
+          image?: string | null
+          is_paid?: boolean | null
+          location: string
+          price?: number | null
+          title: string
+          updated_at?: string
+          visibility?: string
+          waitlist?: Json | null
+        }
+        Update: {
+          attendees?: Json | null
+          capacity?: number
+          community_id?: string | null
+          created_at?: string
+          date_time?: string
+          description?: string
+          host_id?: string
+          host_name?: string
+          id?: string
+          image?: string | null
+          is_paid?: boolean | null
+          location?: string
+          price?: number | null
+          title?: string
+          updated_at?: string
+          visibility?: string
+          waitlist?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string

@@ -147,7 +147,7 @@ const Login = () => {
                     We've sent a magic link to <span className="font-medium">{email}</span>
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Click the link in the email to sign in. If you don't see it, check your spam folder.
+                    Click the link in the email to sign in automatically. If you don't see it, check your spam folder.
                   </p>
                 </div>
                 

@@ -7,6 +7,7 @@ import { Loader2, PlusCircle, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 import { Community } from '@/types';
 
 const Communities = () => {
@@ -31,6 +32,16 @@ const Communities = () => {
     navigate(`/community/${id}`);
   };
 
+  const handleCreateCommunity = async () => {
+    if (!user) {
+      toast.error("Please log in to create a community");
+      navigate('/login');
+      return;
+    }
+    
+    navigate('/create-community');
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
@@ -53,7 +64,7 @@ const Communities = () => {
     <div className="container-custom py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Communities</h1>
-        <Button className="flex items-center gap-1">
+        <Button className="flex items-center gap-1" onClick={handleCreateCommunity}>
           <PlusCircle className="h-4 w-4" />
           Create Community
         </Button>
@@ -64,7 +75,7 @@ const Communities = () => {
           <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium mb-2">No communities found</h3>
           <p className="text-muted-foreground mb-6">There are no communities to display right now.</p>
-          <Button>
+          <Button onClick={handleCreateCommunity}>
             <PlusCircle className="h-4 w-4 mr-2" />
             Create Your First Community
           </Button>

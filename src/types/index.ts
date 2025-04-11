@@ -16,24 +16,28 @@ export interface Community {
   description: string;
   members: string[];
   admins: string[];
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface SGDEvent {
   id: string;
   title: string;
   description: string;
-  dateTime: string;
+  date_time: string;  // Changed from dateTime to match DB column
   location: string;
   capacity: number;
   visibility: EventVisibility;
-  hostId: string;
-  hostName: string;
+  host_id: string;    // Changed from hostId to match DB column
+  host_name: string;  // Changed from hostName to match DB column
   attendees: Attendee[];
   waitlist: Attendee[];
   image?: string;
-  isPaid: boolean;
+  is_paid: boolean;   // Changed from isPaid to match DB column
   price?: number;
-  communityId?: string;
+  community_id?: string; // Changed from communityId to match DB column
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Attendee {

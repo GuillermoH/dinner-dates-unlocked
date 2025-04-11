@@ -1,18 +1,21 @@
 
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Loader2, Calendar, PlusCircle, ArrowLeft, Users } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Community, SGDEvent } from '@/types';
 import EventList from '@/components/EventList';
+import { toast } from 'sonner';
 
 const CommunityDetail = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // Fetch community details
   const { 
@@ -31,7 +34,7 @@ const CommunityDetail = () => {
       if (error) throw error;
       return data as Community;
     },
-    enabled: !!id && !!user,
+    enabled: !!id,
   });
 
   // Fetch community events
@@ -45,19 +48,61 @@ const CommunityDetail = () => {
       const { data, error } = await supabase
         .from('events')
         .select('*')
-        .eq('communityId', id)
-        .order('dateTime', { ascending: true });
+        .eq('community_id', id)
+        .order('date_time', { ascending: true });
       
       if (error) throw error;
       return data as SGDEvent[];
     },
-    enabled: !!id && !!user,
+    enabled: !!id,
   });
 
-  const isLoading = isLoadingCommunity || isLoadingEvents;
+  // Join community mutation
+  const joinCommunityMutation = useMutation({
+    mutationFn: async () => {
+      if (!user || !community) return;
+      
+      // Get current members array
+      const updatedMembers = [...(community.members || [])];
+      
+      // Add current user if not already a member
+      if (!updatedMembers.includes(user.id)) {
+        updatedMembers.push(user.id);
+      }
+      
+      const { error } = await supabase
+        .from('communities')
+        .update({ members: updatedMembers })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      return updatedMembers;
+    },
+    onSuccess: () => {
+      toast.success("You have joined the community!");
+      // Invalidate queries to reload data
+      queryClient.invalidateQueries({ queryKey: ['community', id] });
+    },
+    onError: (error) => {
+      toast.error(`Failed to join: ${(error as Error).message}`);
+    }
+  });
+
+  const handleJoinCommunity = () => {
+    if (!user) {
+      toast.error("Please log in to join this community");
+      navigate('/login');
+      return;
+    }
+    
+    joinCommunityMutation.mutate();
+  };
+
+  const isLoading = isLoadingCommunity || isLoadingEvents || joinCommunityMutation.isPending;
   const error = communityError || eventsError;
 
-  if (isLoading) {
+  if (isLoadingCommunity || isLoadingEvents) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -92,8 +137,8 @@ const CommunityDetail = () => {
     );
   }
 
-  const isMember = community.members?.includes(user?.id || '');
-  const isAdmin = community.admins?.includes(user?.id || '');
+  const isMember = user && community.members?.includes(user.id);
+  const isAdmin = user && community.admins?.includes(user.id);
 
   return (
     <div className="container-custom py-8">
@@ -114,7 +159,7 @@ const CommunityDetail = () => {
         
         <div className="flex gap-3">
           {(isAdmin || isMember) && (
-            <Link to={`/community/${community.id}/create-event`}>
+            <Link to={`/create-event?communityId=${community.id}`}>
               <Button className="flex items-center gap-1">
                 <PlusCircle className="h-4 w-4" />
                 Create Event
@@ -122,9 +167,13 @@ const CommunityDetail = () => {
             </Link>
           )}
           
-          {!isMember && (
-            <Button variant="outline">
-              Join Community
+          {!isMember && user && (
+            <Button 
+              variant="outline" 
+              onClick={handleJoinCommunity}
+              disabled={joinCommunityMutation.isPending}
+            >
+              {joinCommunityMutation.isPending ? "Joining..." : "Join Community"}
             </Button>
           )}
         </div>
@@ -145,6 +194,14 @@ const CommunityDetail = () => {
         ) : (
           <div className="text-center p-8 bg-muted rounded-lg">
             <p className="text-muted-foreground">This community doesn't have any events yet.</p>
+            {(isAdmin || isMember) && (
+              <Link to={`/create-event?communityId=${community.id}`} className="mt-4 inline-block">
+                <Button size="sm">
+                  <PlusCircle className="h-4 w-4 mr-2" />
+                  Create First Event
+                </Button>
+              </Link>
+            )}
           </div>
         )}
       </Card>
