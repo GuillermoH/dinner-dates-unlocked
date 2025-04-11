@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,6 @@ import { toast } from 'sonner';
 import { useEvent } from '@/hooks/useEvent';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { v4 as uuidv4 } from 'uuid';
 import RSVPStatusDialog from '@/components/RSVPStatusDialog';
 import AttendeesList from '@/components/AttendeesList';
 import { RSVPStatus } from '@/types';
@@ -21,26 +19,16 @@ const EventDetail = () => {
   const [rsvpDialogOpen, setRsvpDialogOpen] = useState(false);
   const { user } = useAuth();
   
-  const { event, isLoading, error, updateRSVPStatus } = useEvent(id);
+  const { event, isLoading, error, updateRSVPStatus, getUserRsvpStatus } = useEvent(id);
   
-  // State to track the current user's RSVP status
   const [userRsvpStatus, setUserRsvpStatus] = useState<RSVPStatus | null>(null);
   
-  // Find the user's current RSVP status when the event data loads
   useEffect(() => {
-    if (event?.attendees_by_status && user) {
-      // Check all status groups for the current user
-      if (event.attendees_by_status.going.some(a => a.id === user.id)) {
-        setUserRsvpStatus('going');
-      } else if (event.attendees_by_status.maybe.some(a => a.id === user.id)) {
-        setUserRsvpStatus('maybe');
-      } else if (event.attendees_by_status.not_going.some(a => a.id === user.id)) {
-        setUserRsvpStatus('not_going');
-      } else {
-        setUserRsvpStatus(null);
-      }
+    if (event && user) {
+      const status = getUserRsvpStatus();
+      setUserRsvpStatus(status);
     }
-  }, [event, user]);
+  }, [event, user, getUserRsvpStatus]);
   
   if (isLoading) {
     return (
@@ -111,7 +99,13 @@ const EventDetail = () => {
       return { success: false };
     }
     
-    return updateRSVPStatus(user.id, user.email || '', user.user_metadata?.name || 'Anonymous', status);
+    const result = await updateRSVPStatus(user.id, user.email || '', user.user_metadata?.name || 'Anonymous', status);
+    
+    if (result.success) {
+      setUserRsvpStatus(status);
+    }
+    
+    return result;
   };
   
   const handleShare = () => {
@@ -119,7 +113,6 @@ const EventDetail = () => {
     toast.success("Link copied to clipboard!");
   };
   
-  // Generate an iCal file for the event
   const generateICalFile = () => {
     const icalContent = `BEGIN:VCALENDAR
 VERSION:2.0
@@ -144,7 +137,6 @@ END:VCALENDAR`;
     document.body.removeChild(link);
   };
   
-  // Determine the RSVP button text based on user's status
   const getRsvpButtonText = () => {
     if (!userRsvpStatus) {
       return isFull ? 'Join Waitlist' : 'RSVP Now';
@@ -162,7 +154,6 @@ END:VCALENDAR`;
     }
   };
   
-  // Check if calendar button should be shown
   const showCalendarButton = userRsvpStatus === 'going' || userRsvpStatus === 'maybe';
   
   return (
