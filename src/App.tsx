@@ -8,6 +8,8 @@ import Navbar from "@/components/Navbar";
 import Home from "@/pages/Home";
 import EventDetail from "@/pages/EventDetail";
 import CreateEvent from "@/pages/CreateEvent";
+import Communities from "@/pages/Communities";
+import CommunityDetail from "@/pages/CommunityDetail";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -28,6 +30,8 @@ const App = () => (
                 <Route path="/" element={<Home />} />
                 <Route path="/event/:id" element={<EventDetail />} />
                 <Route path="/create-event" element={<CreateEvent />} />
+                <Route path="/communities" element={<Communities />} />
+                <Route path="/community/:id" element={<CommunityDetail />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Menu, LogOut, User } from "lucide-react";
+import { PlusCircle, Menu, LogOut, User, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
   Sheet,
@@ -36,12 +36,20 @@ const Navbar = () => {
             <div className="hidden md:block">
               <div className="flex gap-3">
                 {user && (
-                  <Link to="/create-event">
-                    <Button className="flex items-center gap-1">
-                      <PlusCircle className="h-4 w-4" />
-                      Create SGD
-                    </Button>
-                  </Link>
+                  <>
+                    <Link to="/communities">
+                      <Button variant="outline" className="flex items-center gap-1">
+                        <Users className="h-4 w-4" />
+                        Communities
+                      </Button>
+                    </Link>
+                    <Link to="/create-event">
+                      <Button className="flex items-center gap-1">
+                        <PlusCircle className="h-4 w-4" />
+                        Create SGD
+                      </Button>
+                    </Link>
+                  </>
                 )}
                 
                 {user ? (
@@ -96,12 +104,20 @@ const Navbar = () => {
                     </Link>
                     
                     {user && (
-                      <Link to="/create-event">
-                        <Button className="w-full justify-start flex items-center gap-1">
-                          <PlusCircle className="h-4 w-4" />
-                          Create SGD
-                        </Button>
-                      </Link>
+                      <>
+                        <Link to="/communities">
+                          <Button variant="ghost" className="w-full justify-start flex items-center gap-1">
+                            <Users className="h-4 w-4" />
+                            Communities
+                          </Button>
+                        </Link>
+                        <Link to="/create-event">
+                          <Button className="w-full justify-start flex items-center gap-1">
+                            <PlusCircle className="h-4 w-4" />
+                            Create SGD
+                          </Button>
+                        </Link>
+                      </>
                     )}
                     
                     {user && (

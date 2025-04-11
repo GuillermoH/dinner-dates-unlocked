@@ -58,7 +58,9 @@ const Login = () => {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Verify Your Identity</CardTitle>
           <CardDescription>
-            No passwords needed! We'll send you a one-time code to verify your identity.
+            {method === 'email' 
+              ? 'No passwords needed! We'll send you a secure login link via email.'
+              : 'No passwords needed! We'll send you a one-time code to verify your identity.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -87,7 +89,7 @@ const Login = () => {
                         />
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        We'll send a verification code to this email address.
+                        We'll send a secure login link to this email address.
                       </p>
                     </div>
                     
@@ -96,7 +98,7 @@ const Login = () => {
                       className="w-full"
                       disabled={isLoading}
                     >
-                      {isLoading ? 'Sending...' : 'Send Verification Code'}
+                      {isLoading ? 'Sending...' : 'Send Login Link'}
                     </Button>
                   </div>
                 </form>
@@ -136,44 +138,22 @@ const Login = () => {
               </TabsContent>
             </Tabs>
           ) : (
-            <form onSubmit={handleVerifyCode}>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="code">Verification Code</Label>
-                  <div className="flex justify-center py-2">
-                    <InputOTP 
-                      maxLength={6}
-                      value={code}
-                      onChange={setCode}
-                      required
-                    >
-                      <InputOTPGroup>
-                        <InputOTPSlot index={0} />
-                        <InputOTPSlot index={1} />
-                        <InputOTPSlot index={2} />
-                        <InputOTPSlot index={3} />
-                        <InputOTPSlot index={4} />
-                        <InputOTPSlot index={5} />
-                      </InputOTPGroup>
-                    </InputOTP>
-                  </div>
-                  <p className="text-xs text-muted-foreground text-center">
-                    Enter the code we sent to {method === 'email' ? email : phone}
+            method === 'email' ? (
+              <div className="space-y-6">
+                <div className="space-y-2 text-center">
+                  <Mail className="mx-auto h-12 w-12 text-primary" />
+                  <h3 className="text-lg font-medium">Check your email</h3>
+                  <p className="text-muted-foreground">
+                    We've sent a magic link to <span className="font-medium">{email}</span>
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Click the link in the email to sign in. If you don't see it, check your spam folder.
                   </p>
                 </div>
                 
                 <Button 
-                  type="submit" 
-                  className="w-full"
-                  disabled={isLoading || code.length !== 6}
-                >
-                  {isLoading ? 'Verifying...' : 'Verify Code'}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                
-                <Button 
                   type="button" 
-                  variant="link" 
+                  variant="outline" 
                   className="w-full text-sm"
                   onClick={() => setSentCode(false)}
                   disabled={isLoading}
@@ -181,7 +161,54 @@ const Login = () => {
                   Use a different email or phone
                 </Button>
               </div>
-            </form>
+            ) : (
+              <form onSubmit={handleVerifyCode}>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="code">Verification Code</Label>
+                    <div className="flex justify-center py-2">
+                      <InputOTP 
+                        maxLength={6}
+                        value={code}
+                        onChange={setCode}
+                        required
+                      >
+                        <InputOTPGroup>
+                          <InputOTPSlot index={0} />
+                          <InputOTPSlot index={1} />
+                          <InputOTPSlot index={2} />
+                          <InputOTPSlot index={3} />
+                          <InputOTPSlot index={4} />
+                          <InputOTPSlot index={5} />
+                        </InputOTPGroup>
+                      </InputOTP>
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center">
+                      Enter the code we sent to {phone}
+                    </p>
+                  </div>
+                  
+                  <Button 
+                    type="submit" 
+                    className="w-full"
+                    disabled={isLoading || code.length !== 6}
+                  >
+                    {isLoading ? 'Verifying...' : 'Verify Code'}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                  
+                  <Button 
+                    type="button" 
+                    variant="link" 
+                    className="w-full text-sm"
+                    onClick={() => setSentCode(false)}
+                    disabled={isLoading}
+                  >
+                    Use a different email or phone
+                  </Button>
+                </div>
+              </form>
+            )
           )}
         </CardContent>
         <CardFooter className="flex justify-center text-sm text-muted-foreground">
