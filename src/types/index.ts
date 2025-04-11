@@ -33,7 +33,7 @@ export interface SGDEvent {
   host_name: string;  // Changed from hostName to match DB column
   attendees: Attendee[];
   waitlist: Attendee[];
-  attendees_by_status?: {
+  attendees_by_status: {
     going: Attendee[];
     maybe: Attendee[];
     not_going: Attendee[];

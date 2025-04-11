@@ -1,7 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { SGDEvent } from '@/types';
+import { SGDEvent, Attendee } from '@/types';
 import { jsonToAttendees, isValidVisibility } from '@/utils/typeGuards';
 
 export const useEvent = (id: string | undefined) => {
@@ -28,8 +28,12 @@ export const useEvent = (id: string | undefined) => {
         ...data,
         attendees: jsonToAttendees(data.attendees),
         waitlist: jsonToAttendees(data.waitlist),
-        // Include attendees_by_status if available
-        attendees_by_status: data.attendees_by_status || {
+        // Parse attendees_by_status if available
+        attendees_by_status: data.attendees_by_status ? {
+          going: jsonToAttendees(data.attendees_by_status.going || []),
+          maybe: jsonToAttendees(data.attendees_by_status.maybe || []),
+          not_going: jsonToAttendees(data.attendees_by_status.not_going || [])
+        } : {
           going: [],
           maybe: [],
           not_going: []
@@ -52,7 +56,7 @@ export const useEvent = (id: string | undefined) => {
   ) => {
     if (!id || !event) return { success: false };
     
-    const attendee = {
+    const attendee: Attendee = {
       id: attendeeId,
       name,
       email,
